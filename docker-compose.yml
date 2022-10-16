@@ -1,0 +1,46 @@
+version: '3.7'
+
+x-build-args:
+  &build-args
+    args:
+      - USER=${USER}
+      - USER_ID=${USER_ID}
+
+networks:
+  traefik-net:
+    name: traefik-net
+    external: true
+  default:
+    driver: bridge
+
+services:
+  postgres:
+    container_name: ${PROJECT_NAME}__postgres
+    build:
+      <<: *build-args
+      context: ./docker-local/postgresql
+    environment:
+      POSTGRES_DB: ${DB_NAME}
+      POSTGRES_USER: ${DB_USER_NAME}
+      POSTGRES_PASSWORD: ${DB_USER_PASSWORD}
+    ports:
+      - "${DB_LOCALHOST_PORT}:5432"
+    volumes:
+      - ./database/data:/var/lib/postgresql/data:rw
+      - ${PROJECT_ROOT_PATH}/docker-local/postgresql/postgresql.conf:/usr/share/postgresql/postgresql.conf.sample
+    networks:
+      - default
+
+  pgadmin:
+    container_name: ${PROJECT_NAME}__pgadmin
+    restart: unless-stopped
+    image: dpage/pgadmin4:6
+    ports:
+      - "${PG_ADMIN_PORT}:80"
+    depends_on:
+      - postgres
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PG_ADMIN_USER_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PG_ADMIN_USER_PASSWORD}
+    networks:
+      - default

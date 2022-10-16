@@ -1,0 +1,60 @@
+#!/bin/bash
+
+USER=$(whoami)
+USER_ID=$(id -u)
+
+export USER=${USER}
+export USER_ID=${USER_ID}
+
+if [ -f ./.env ]; then
+    source ./.env
+fi
+
+source ./scripts/env-file-operations
+
+
+function get_compose_files() {
+    echo \
+        -f docker-compose.yml
+}
+
+function build_images() {
+    docker-compose $__COMPOSE_FILES build --pull
+}
+
+function up_containers() {
+    local __COMPOSE_FILES
+    __COMPOSE_FILES=$(get_compose_files)
+    docker-compose $__COMPOSE_FILES up -d
+}
+
+function down_containers() {
+    local __COMPOSE_FILES
+    __COMPOSE_FILES=$(get_compose_files)
+    docker-compose $__COMPOSE_FILES down
+}
+
+case "$1" in
+    init)
+        copy_env "./.env.example" "./.env"
+        mkdir -p -v ./database/data
+        build_images
+        echo "ready to up"
+        echo "make command => ./lde up"
+        ;;
+    build)
+        build_images
+        ;;
+    up)
+        up_containers
+        ;;
+    down)
+        down_containers
+        ;;
+    restart)
+        down_containers
+        up_containers
+        ;;
+    *)
+        echo -e "${YELLOW}Command ${RED}\"${1}\"${YELLOW} unavailable"
+esac

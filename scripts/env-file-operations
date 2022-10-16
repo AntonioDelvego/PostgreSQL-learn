@@ -1,0 +1,39 @@
+#!/bin/bash
+
+function copy_env() {
+    local __SOURCE_ENV_PATH=$1
+    local __TARGET_ENV_PATH="${2:-./.env}"
+
+    echo -ne "${BLUE}env file \"${__TARGET_ENV_PATH}\"...${NC}"
+
+    cp -rf "$__SOURCE_ENV_PATH" "$__TARGET_ENV_PATH"
+    echo -e "${GREEN}copied${NC}"
+}
+
+function append_env() {
+    local __SOURCE_ENV_PATH=$1
+    local __VARIABLES_REGEXP=$2
+
+    echo -e "${BLUE}Append variables ${GREEN}\"^${__VARIABLES_REGEXP}*\"${BLUE} from ${GREEN}\"${__SOURCE_ENV_PATH}\"${BLUE}...${NC}";
+
+    {
+        echo ""
+        echo "# ${__VARIABLES_REGEXP} variables"
+        grep "^$__VARIABLES_REGEXP" "$__SOURCE_ENV_PATH"
+    } >> ./.env
+
+
+    source "./.env"
+
+    echo -e "${GREEN}Appended Variables:${NC}"
+    grep "^$__VARIABLES_REGEXP" ./.env
+    echo -e "${GREEN}env file is copied${NC}"
+}
+
+# file, key, val
+function set_env_var() {
+    echo "Set ${2}=${3} in ${1}"
+    sed "s/${2}=.*/${2}=${3}/" "${1}" > "${1}.sed"
+    mv "${1}.sed" "${1}"
+}
+

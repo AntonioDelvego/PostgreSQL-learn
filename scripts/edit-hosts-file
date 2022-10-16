@@ -1,0 +1,42 @@
+#!/bin/bash
+
+HOSTS_FILE="/etc/hosts"
+
+function getHostnameRegExp() {
+    echo "\s${1}$"
+}
+
+function add_host() {
+    local IP=$1
+    local HOSTNAME=$2
+    local HOSTNAME_REG_EXP
+    HOSTNAME_REG_EXP=$(getHostnameRegExp "$HOSTNAME")
+
+    HOSTS_LINE="$IP $HOSTNAME"
+    echo -en "adding $HOSTNAME..."
+
+    if grep -q "$HOSTNAME_REG_EXP" "$HOSTS_FILE"; then
+        echo -e "${YELLOW}exists${NC}"
+    else
+        sudo -- sh -c -e "echo '$HOSTS_LINE' >> ${HOSTS_FILE}";
+
+        if grep -q "$HOSTNAME_REG_EXP" "$HOSTS_FILE"; then
+            echo -e "${GREEN}done${NC}";
+        else
+            echo -e "${RED}failed${NC}";
+        fi
+    fi
+}
+
+function remove_host() {
+  local HOSTNAME=$1
+  local HOSTNAME_REG_EXP
+  HOSTNAME_REG_EXP=$(getHostnameRegExp "$HOSTNAME")
+
+  if grep -q "$HOSTNAME_REG_EXP" "$HOSTS_FILE"; then
+    echo -e "${BLUE}$HOSTNAME Found in your $HOSTS_FILE, Removing now...${NC}";
+    sudo sed -i".bak" "/$HOSTNAME_REG_EXP/d" "$HOSTS_FILE"
+  else
+    echo -e "${YELLOW}$HOSTNAME was not found in your $HOSTS_FILE${NC}";
+  fi
+}
